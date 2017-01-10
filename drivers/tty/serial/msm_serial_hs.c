@@ -66,6 +66,10 @@
 #include <linux/platform_data/msm_serial_hs.h>
 #include <linux/msm-bus.h>
 
+#ifdef CONFIG_BT_MSM_SLEEP
+#include <net/bluetooth/bluesleep.h>
+#endif
+
 #include "msm_serial_hs_hwreg.h"
 #define UART_SPS_CONS_PERIPHERAL 0
 #define UART_SPS_PROD_PERIPHERAL 1
@@ -307,10 +311,16 @@ static int msm_hs_ioctl(struct uart_port *uport, unsigned int cmd,
 	switch (cmd) {
 	case MSM_ENABLE_UART_CLOCK: {
 		ret = msm_hs_request_clock_on(&msm_uport->uport);
+#ifdef CONFIG_BT_MSM_SLEEP
+		bluesleep_outgoing_data();
+#endif
 		break;
 	}
 	case MSM_DISABLE_UART_CLOCK: {
 		ret = msm_hs_request_clock_off(&msm_uport->uport);
+#ifdef CONFIG_BT_MSM_SLEEP
+		bluesleep_tx_allow_sleep();
+#endif
 		break;
 	}
 	case MSM_GET_UART_CLOCK_STATUS: {
@@ -1221,7 +1231,7 @@ static void msm_hs_set_termios(struct uart_port *uport,
 	if (c_cflag & CRTSCTS) {
 		data |= UARTDM_MR1_CTS_CTL_BMSK;
 		data |= UARTDM_MR1_RX_RDY_CTL_BMSK;
-		msm_uport->flow_control = false;
+		msm_uport->flow_control = true;
 	}
 	msm_hs_write(uport, UART_DM_MR1, data);
 	MSM_HS_INFO("%s: Cflags 0x%x Baud %u\n", __func__, c_cflag, bps);
@@ -1432,6 +1442,11 @@ static void msm_hs_submit_tx_locked(struct uart_port *uport)
 	/* Set 1 second timeout */
 	mod_timer(&tx->tx_timeout_timer,
 		jiffies + msecs_to_jiffies(MSEC_PER_SEC));
+
+	/* Notify the bluesleep driver of outgoing data, if available. */
+#ifdef CONFIG_BT_MSM_SLEEP
+	bluesleep_outgoing_data();
+#endif
 
 	MSM_HS_DBG("%s:Enqueue Tx Cmd, ret %d\n", __func__, ret);
 }
@@ -2019,9 +2034,9 @@ void msm_hs_set_mctrl_locked(struct uart_port *uport,
 	MSM_HS_INFO("%s: set_rts %d\n", __func__, set_rts);
 
 	if (set_rts)
-		msm_hs_disable_flow_control(uport, true);
+		msm_hs_disable_flow_control(uport, false);
 	else
-		msm_hs_enable_flow_control(uport, true);
+		msm_hs_enable_flow_control(uport, false);
 }
 
 void msm_hs_set_mctrl(struct uart_port *uport,
@@ -2362,22 +2377,6 @@ exit_request_clock_on:
 	return ret;
 }
 EXPORT_SYMBOL(msm_hs_request_clock_on);
-
-void msm_hs_set_clock(int port_index, int on)
-{
-	struct uart_port *msm_uport = msm_hs_get_uart_port(port_index);
-
-	//MSM_HS_INFO("%s /dev/ttyHS%d clock: %s\n", __func__, port_index, on ? "ON" : "OFF");
-
-	if (on) {
-		msm_hs_request_clock_on(msm_uport);
-		msm_hs_set_mctrl(msm_uport, TIOCM_RTS);
-	} else {
-		msm_hs_set_mctrl(msm_uport, 0);
-		msm_hs_request_clock_off(msm_uport);
-	}
-}
-EXPORT_SYMBOL(msm_hs_set_clock);
 
 static irqreturn_t msm_hs_wakeup_isr(int irq, void *dev)
 {

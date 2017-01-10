@@ -128,6 +128,16 @@ config BT_HCIBPA10X
 	  Say Y here to compile support for HCI BPA10x devices into the
 	  kernel or say M to compile it as module (bpa10x).
 
+config BT_MSM_SLEEP
+	tristate "MSM Bluesleep driver"
+	depends on BT && SERIAL_MSM_HS
+	help
+	  Bluetooth MSM bluesleep driver.
+	  This driver provides support for BTS sleep.
+
+	  Say Y here to compile support for BTS sleep into the
+	  kernel or say M to compile it as module (bfusb).
+
 config BT_HCIBFUSB
 	tristate "HCI BlueFRITZ! USB driver"
 	depends on USB
@@ -212,7 +222,7 @@ config BT_MRVL
 	  The core driver to support Marvell Bluetooth devices.
 
 	  This driver is required if you want to support
-	  Marvell Bluetooth devices, such as 8688/8787/8797/8897.
+	  Marvell Bluetooth devices, such as 8688/8787/8797/8887/8897.
 
 	  Say Y here to compile Marvell Bluetooth driver
 	  into the kernel or say M to compile it as module.
@@ -225,7 +235,7 @@ config BT_MRVL_SDIO
 	  The driver for Marvell Bluetooth chipsets with SDIO interface.
 
 	  This driver is required if you want to use Marvell Bluetooth
-	  devices with SDIO interface. Currently SD8688/SD8787/SD8797/SD8897
+	  devices with SDIO interface. Currently SD8688/SD8787/SD8797/SD8887/SD8897
 	  chipsets are supported.
 
 	  Say Y here to compile support for Marvell BT-over-SDIO driver
@@ -252,7 +262,7 @@ config BT_WILINK
 	  core driver to communicate with the BT core of the combo chip.
 
 	  Say Y here to compile support for Texas Instrument's WiLink7 driver
-	  into the kernel or say M to compile it as module.
+	  into the kernel or say M to compile it as module (btwilink).
 
 config MSM_BT_POWER
 	tristate "MSM Bluetooth Power Control"
@@ -262,6 +272,15 @@ config MSM_BT_POWER
 	  Provides a parameter to switch on/off power from PMIC
 	  to Bluetooth device.
 
+config BT_BCM43XX
+	tristate "Broadcom BCM43xx control driver"
+	depends on SERIAL_MSM_HS && RFKILL
+	help
+	  This enables the Bluetooth driver for Broadcom BCM43xx.
+	  This driver controls BT power/HOST_WAKE and BT_WAKE via GPIO.
+
+	  Say Y here to compile support for Broadcom BCM43xx control driver
+	  into the kernel or say M to compile it as module.
 
 config BTFM_SLIM
 	tristate "MSM Bluetooth/FM Slimbus Driver"
@@ -283,9 +302,14 @@ config BTFM_SLIM_WCN3990
 	  It is designed to adapt any future BT/FM device to implement a specific
 	  chip initialization process and control.
 
-config MSM_BT_BLUESLEEP
-	tristate "MSM Bluetooth Sleep"
+config BT_BCM_COMBO
+	tristate "Broadcom BT/FM Combo chip driver"
 	help
-	  Bluetooth sleep driver.
-	  This driver support bluetooth low power mode.
+	  This enables the Broadcom BT/FM combo chip driver for
+	  certain BCM chips found primarily on various handheld
+	  devices.
+	  If unsure, say N.
+
+source drivers/bluetooth/broadcom/Kconfig
+
 endmenu

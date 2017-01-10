@@ -6459,11 +6459,7 @@ static int nl80211_dump_survey(struct sk_buff *skb,
 static bool nl80211_valid_wpa_versions(u32 wpa_versions)
 {
 	return !(wpa_versions & ~(NL80211_WPA_VERSION_1 |
-				  NL80211_WPA_VERSION_2
-#ifdef CONFIG_BRCM_WAPI
-                               | NL80211_WAPI_VERSION_1
-#endif
-                 ));
+				  NL80211_WPA_VERSION_2));
 }
 
 static int nl80211_authenticate(struct sk_buff *skb, struct genl_info *info)
@@ -8385,7 +8381,7 @@ static int nl80211_leave_mesh(struct sk_buff *skb, struct genl_info *info)
 	return cfg80211_leave_mesh(rdev, dev);
 }
 
-#ifdef CONFIG_PM
+#if defined(CONFIG_PM) && !defined(CONFIG_MACH_LGE)
 static int nl80211_send_wowlan_patterns(struct sk_buff *msg,
 					struct cfg80211_registered_device *rdev)
 {
@@ -10236,7 +10232,7 @@ static const struct genl_ops nl80211_ops[] = {
 		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
 				  NL80211_FLAG_NEED_RTNL,
 	},
-#ifdef CONFIG_PM
+#if defined(CONFIG_PM) && !defined(CONFIG_MACH_LGE)
 	{
 		.cmd = NL80211_CMD_GET_WOWLAN,
 		.doit = nl80211_get_wowlan,
